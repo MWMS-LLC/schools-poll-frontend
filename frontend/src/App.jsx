@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AudioProvider } from './contexts/AudioContext.jsx'
+import SchoolsLanding from './pages/SchoolsLanding.jsx'
 import Landing from './pages/Landing.jsx'
 import Category from './pages/Category.jsx'
 import Block from './pages/Block.jsx'
@@ -19,7 +20,7 @@ function App() {
       <Router>
         <div className="App">
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<SchoolsLanding />} />
             <Route path="/category/:categoryId" element={<Category />} />
             <Route path="/block/:blockCode" element={<Block />} />
             <Route path="/too-old" element={<TooOld />} />
