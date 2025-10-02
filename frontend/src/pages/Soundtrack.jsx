@@ -72,9 +72,8 @@ const Soundtrack = () => {
   useEffect(() => {
     const loadSoundtracks = async () => {
       try {
-        await soundtrackService.loadSoundtracks()
-        const songs = soundtrackService.getSoundtracks()
-        const songPlaylists = soundtrackService.getPlaylists()
+        const songs = await soundtrackService.getSoundtracks()
+        const songPlaylists = await soundtrackService.getPlaylists()
         setSoundtracks(songs)
         setPlaylists(songPlaylists)
         
