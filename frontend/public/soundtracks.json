@@ -1,0 +1,34 @@
+{
+  "soundtracks": [
+    {
+      "song_id": "LRDD_01",
+      "song_title": "My World My Say Theme",
+      "mood_tag": "uplifting",
+      "playlist_tag": "All Songs",
+      "lyrics_snippet": "This is your world, this is your say...",
+      "featured": true,
+      "file_name": "My World My Say Theme.mp3",
+      "description": "The main theme song that captures the spirit of the platform"
+    },
+    {
+      "song_id": "LRDD_02", 
+      "song_title": "My Voice",
+      "mood_tag": "reflective",
+      "playlist_tag": "All Songs",
+      "lyrics_snippet": "I have a voice, I have a say...",
+      "featured": true,
+      "file_name": "my-voice.mp3",
+      "description": "A reflective piece about finding your voice"
+    },
+    {
+      "song_id": "LRDD_03",
+      "song_title": "Sparks Still Rise", 
+      "mood_tag": "hopeful",
+      "playlist_tag": "All Songs",
+      "lyrics_snippet": "Even in the darkness, sparks still rise...",
+      "featured": true,
+      "file_name": "sparks-still-rise.mp3",
+      "description": "An uplifting anthem about hope and resilience"
+    }
+  ]
+}

@@ -1,6 +1,4 @@
-// Soundtrack service for managing music data and playlist integration
-const API_BASE = import.meta.env.VITE_API_BASE;
-
+// Soundtrack service for schools site - uses static data instead of backend API
 class SoundtrackService {
   constructor() {
     this.soundtracks = []
@@ -8,17 +6,17 @@ class SoundtrackService {
     this.loaded = false
   }
 
-  // Load soundtrack data from backend API
+  // Load soundtrack data from static JSON file
   async loadSoundtracks() {
     try {
-      // Fetch soundtracks from backend API
-      const response = await fetch(`${API_BASE}/api/soundtracks`);
+      // Fetch soundtracks from static JSON file
+      const response = await fetch('/soundtracks.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
       const data = await response.json()
-      console.log('Loaded soundtracks from API:', data.soundtracks.length)
+      console.log('Loaded soundtracks from static file:', data.soundtracks.length)
       
       // Transform the data to match our component's format
       this.soundtracks = data.soundtracks.map(song => ({
@@ -28,158 +26,85 @@ class SoundtrackService {
         playlist: song.playlist_tag,
         lyrics: song.lyrics_snippet,
         featured: song.featured,
-        featuredOrder: song.featured_order || 0,
-        fileUrl: song.file_url
+        fileName: song.file_name,
+        description: song.description
       }))
       
-      // Load playlists from API
-      await this.loadPlaylists()
-      
+      // Extract unique playlists
+      this.playlists = [...new Set(this.soundtracks.map(song => song.playlist))]
       this.loaded = true
+      
       return this.soundtracks
     } catch (error) {
-      console.error('Error loading soundtracks from API:', error)
-      // Fallback to minimal data if API fails
-      return this.getFallbackData()
+      console.error('Error loading soundtracks:', error)
+      // Fallback to empty array
+      this.soundtracks = []
+      this.playlists = []
+      this.loaded = true
+      return []
     }
-  }
-  
-  // Load playlists from backend API
-  async loadPlaylists() {
-    try {
-      const response = await fetch(`${API_BASE}/api/soundtracks/playlists`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      this.playlists = [];
-
-      // Normalize: split comma-separated items and trim
-      data.playlists.forEach(item => {
-        item.split(',').map(p => p.trim()).forEach(playlist => {
-          if (!this.playlists.includes(playlist)) {
-            this.playlists.push(playlist);
-          }
-        });
-      });
-
-    } catch (error) {
-      console.error('Error loading playlists from API:', error);
-
-      // Fallback: extract from soundtracks
-      this.playlists = ['All Songs'];
-      this.soundtracks.forEach(song => {
-        if (song.playlist) {
-          const songPlaylists = song.playlist.split(',').map(p => p.trim());
-          songPlaylists.forEach(playlist => {
-            if (!this.playlists.includes(playlist)) {
-              this.playlists.push(playlist);
-            }
-          });
-        }
-      });
-    }
-
-    // ✅ Keep "All Songs" at the top, sort the rest alphabetically
-    const hasAllSongs = this.playlists.includes('All Songs');
-    let sorted = this.playlists.filter(p => p !== 'All Songs').sort((a, b) => a.localeCompare(b));
-    this.playlists = hasAllSongs ? ['All Songs', ...sorted] : sorted;
-  }
-
-  
-  // Fallback data if CSV loading fails
-  getFallbackData() {
-    return [
-      {
-        id: "STR_01",
-        title: "Spark Still Rise (Male Rap)",
-        mood: "bitter, believing",
-        playlist: "Spiral, Believe, Lowkey",
-        lyrics: "You ain't gotta fake the fire. Even sparks can light the sky.",
-        featured: true,
-        featuredOrder: 1,
-        fileUrl: "https://myworld-soundtrack.s3.us-east-2.amazonaws.com/myworld_soundtrack/sparks-still-rise.mp3"
-      }
-    ]
   }
 
   // Get all soundtracks
-  getSoundtracks() {
+  async getSoundtracks() {
+    if (!this.loaded) {
+      await this.loadSoundtracks()
+    }
     return this.soundtracks
   }
 
-  // Get all playlists
-  getPlaylists() {
+  // Get soundtracks by playlist
+  async getSoundtracksByPlaylist(playlistName) {
+    if (!this.loaded) {
+      await this.loadSoundtracks()
+    }
+    
+    if (playlistName === 'All Songs') {
+      return this.soundtracks
+    }
+    
+    return this.soundtracks.filter(song => song.playlist === playlistName)
+  }
+
+  // Get featured soundtracks
+  async getFeaturedSoundtracks() {
+    if (!this.loaded) {
+      await this.loadSoundtracks()
+    }
+    
+    return this.soundtracks.filter(song => song.featured)
+  }
+
+  // Get playlists
+  async getPlaylists() {
+    if (!this.loaded) {
+      await this.loadSoundtracks()
+    }
+    
     return this.playlists
   }
 
-  // Get songs by playlist
-  getSongsByPlaylist(playlist) {
-    if (playlist === 'All Songs') {
-      return this.soundtracks
+  // Get soundtrack by ID
+  async getSoundtrackById(id) {
+    if (!this.loaded) {
+      await this.loadSoundtracks()
     }
-    return this.soundtracks.filter(song => 
-      song.playlist.includes(playlist)
-    )
-  }
-
-  // Get songs by mood
-  getSongsByMood(mood) {
-    return this.soundtracks.filter(song => 
-      song.mood.toLowerCase().includes(mood.toLowerCase())
-    )
-  }
-
-  // Get featured songs
-  getFeaturedSongs() {
-    return this.soundtracks
-      .filter(song => song.featured)
-      .sort((a, b) => a.featuredOrder - b.featuredOrder)
-  }
-
-  // Get song by ID
-  getSongById(id) {
+    
     return this.soundtracks.find(song => song.id === id)
   }
 
-  // Search songs by text
-  searchSongs(query) {
-    const lowerQuery = query.toLowerCase()
+  // Search soundtracks
+  async searchSoundtracks(query) {
+    if (!this.loaded) {
+      await this.loadSoundtracks()
+    }
+    
+    const lowercaseQuery = query.toLowerCase()
     return this.soundtracks.filter(song => 
-      song.title.toLowerCase().includes(lowerQuery) ||
-      song.lyrics.toLowerCase().includes(lowerQuery) ||
-      song.mood.toLowerCase().includes(lowerQuery) ||
-      song.playlist.toLowerCase().includes(lowerQuery)
+      song.title.toLowerCase().includes(lowercaseQuery) ||
+      song.mood.toLowerCase().includes(lowercaseQuery) ||
+      song.lyrics.toLowerCase().includes(lowercaseQuery)
     )
-  }
-
-  // Get smart song recommendation based on question text and block code
-  getSmartSongRecommendation(questionText, blockCode) {
-    if (!this.soundtracks.length) return null
-    
-    // Simple recommendation logic - can be enhanced later
-    const questionLower = questionText.toLowerCase()
-    
-    // Look for mood matches
-    const moodMatches = this.soundtracks.filter(song => 
-      song.mood && song.mood.toLowerCase().includes('believing') ||
-      song.mood && song.mood.toLowerCase().includes('inspiring')
-    )
-    
-    if (moodMatches.length > 0) {
-      // Return a random mood-matching song
-      return moodMatches[Math.floor(Math.random() * moodMatches.length)]
-    }
-    
-    // Fallback to a random featured song
-    const featuredSongs = this.getFeaturedSongs()
-    if (featuredSongs.length > 0) {
-      return featuredSongs[0]
-    }
-    
-    // Last resort - return first available song
-    return this.soundtracks[0]
   }
 }
 
